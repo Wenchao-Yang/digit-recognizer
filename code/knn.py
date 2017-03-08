@@ -9,7 +9,7 @@ import numpy as np
 import heapq as hq
 from scipy.stats import itemfreq
 
-# weight = 1  # uniform weight,
+# weight = 1  # uniform weight
 
 
 class KnnClassifier:
@@ -22,30 +22,24 @@ class KnnClassifier:
         self.test_data = test.values
         # self.label_frequency_table = np.zeros((self.test_data.shape[0], 10))
 
-    # calculate the euclidean distance between vector x and vector y (same dim)
-    @staticmethod
-    def euclidean_distance(x, y):
-        # x = np.array(x)
-        # y = np.array(y)
-        distance = np.linalg.norm(x - y, ord=2, axis=0)
-        return distance
-        # return math.sqrt(sum([(a - b)**2 for a, b in zip(x, y)]))
-
     # predict the class labels for the provided data
     def predict(self):
         print "Predicting"
-        predicted_labels = []
+        predicted_labels = np.zeros(len(self.test_data))
+
         for i in range(0, len(self.test_data)):
-            target_point = self.test_data[i]  # a row of test data
-            # print target_point
-            # find k nearest from train
-            nearest_k_points = hq.nsmallest(self.k, enumerate(self.train_data),
-                                            key=lambda point: self.euclidean_distance(target_point, point[1]))
-            # print nearest_k_points
-            nearest_labels = [self.train_label[point[0]] for point in nearest_k_points]
-            print nearest_labels
+            # calculate the distance between this target point and all train data
+            dist = np.linalg.norm(self.train_data - self.test_data[i], axis=1, ord=2)
+
+            # find k smallest distance from train. This outputs a list of (index, distance)
+            smallest_k_distances_index_pair = hq.nsmallest(self.k, enumerate(dist), key=lambda d: d[1])
+
+            # extract the labels
+            nearest_labels = [self.train_label[pair[0]] for pair in smallest_k_distances_index_pair]
             majority_label = max(set(nearest_labels), key=nearest_labels.count)
-            predicted_labels.append(majority_label)
+            predicted_labels[i] = majority_label
+            print majority_label
+
             # populate frequency table
             # for l in nearest_labels:
             #     self.label_frequency_table[l][i] += 1
@@ -63,10 +57,9 @@ closest points.
 
 
 def test_function():
-    train = pd.read_csv("../data/train.csv")
-    test = pd.read_csv("../data/test.csv")
-    k = 1
-
+    train = pd.read_csv("../data/train.csv", dtype=pd.np.float32)
+    test = pd.read_csv("../data/test.csv", dtype=pd.np.float32)
+    k = 3
     knn = KnnClassifier(train, test, k)
     predicted_labels = knn.predict()
     print predicted_labels
