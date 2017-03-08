@@ -7,6 +7,7 @@
 import pandas as pd
 import numpy as np
 import heapq as hq
+from scipy.stats import itemfreq
 
 # weight = 1  # uniform weight,
 
@@ -16,19 +17,16 @@ class KnnClassifier:
         # self.train = train
         # self.test = test
         self.k = k
-        self.train_data = train.drop("label", axis=1)
-        self.train_label = train.iloc[0:, 0]
-        #print self.train_label
-        self.test_data = test
-        self.label_frequency_table = pd.DataFrame(data=np.zeros((self.test_data.shape[0], 10)),
-                                                  index=range(0, self.test_data.shape[0]),
-                                                  columns=range(0, 10))
+        self.train_data = train.drop("label", axis=1).values
+        self.train_label = train.iloc[0:, 0].values
+        self.test_data = test.values
+        # self.label_frequency_table = np.zeros((self.test_data.shape[0], 10))
 
     # calculate the euclidean distance between vector x and vector y (same dim)
     @staticmethod
     def euclidean_distance(x, y):
-        x = np.array(x)
-        y = np.array(y)
+        # x = np.array(x)
+        # y = np.array(y)
         distance = np.linalg.norm(x - y, ord=2, axis=0)
         return distance
         # return math.sqrt(sum([(a - b)**2 for a, b in zip(x, y)]))
@@ -37,21 +35,20 @@ class KnnClassifier:
     def predict(self):
         print "Predicting"
         predicted_labels = []
-        for i in self.test_data.index:
-            target_point = self.test_data.ix[i]  # a row of test data
+        for i in range(0, len(self.test_data)):
+            target_point = self.test_data[i]  # a row of test data
             # print target_point
             # find k nearest from train
-            nearest_k_points = hq.nsmallest(self.k, #enumerate(self.train_data),
-                                            self.train_data.itertuples(),
-                                            key=lambda point: self.euclidean_distance(target_point, point[1:]))
+            nearest_k_points = hq.nsmallest(self.k, enumerate(self.train_data),
+                                            key=lambda point: self.euclidean_distance(target_point, point[1]))
             # print nearest_k_points
-            nearest_labels = [self.train_label.ix[point[0]] for point in nearest_k_points]
+            nearest_labels = [self.train_label[point[0]] for point in nearest_k_points]
             print nearest_labels
             majority_label = max(set(nearest_labels), key=nearest_labels.count)
             predicted_labels.append(majority_label)
             # populate frequency table
-            for l in nearest_labels:
-                self.label_frequency_table[l][i] += 1
+            # for l in nearest_labels:
+            #     self.label_frequency_table[l][i] += 1
         return predicted_labels
 
     # calculate the probability table
