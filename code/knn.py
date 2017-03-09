@@ -20,13 +20,12 @@ class KnnClassifier:
         self.train_data = train.drop("label", axis=1).values
         self.train_label = train.iloc[0:, 0].values
         self.test_data = test.values
-        # self.label_frequency_table = np.zeros((self.test_data.shape[0], 10))
+        self.label_frequency_table = np.zeros((self.test_data.shape[0], 10))
 
     # predict the class labels for the provided data
     def predict(self):
         print "Predicting"
         predicted_labels = np.zeros(len(self.test_data))
-
         for i in range(0, len(self.test_data)):
             # calculate the distance between this target point and all train data
             dist = np.linalg.norm(self.train_data - self.test_data[i], axis=1, ord=2)
@@ -39,10 +38,9 @@ class KnnClassifier:
             majority_label = max(set(nearest_labels), key=nearest_labels.count)
             predicted_labels[i] = majority_label
             print majority_label
-
             # populate frequency table
-            # for l in nearest_labels:
-            #     self.label_frequency_table[l][i] += 1
+            freq = itemfreq(nearest_labels)
+            self.label_frequency_table[i, :][freq[:, 0].astype(dtype=int)] = freq[:, 1]
         return predicted_labels
 
     # calculate the probability table
